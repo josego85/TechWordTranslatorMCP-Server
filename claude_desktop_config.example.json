@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "techword-translator": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "--network=host",
+        "-e", "TECHWORD_TRANSLATOR_API_URL=http://localhost:8000",
+        "techword-mcp"
+      ]
+    }
+  }
+}

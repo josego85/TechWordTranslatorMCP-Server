@@ -1,0 +1,11 @@
+services:
+  techword-mcp:
+    build: .
+    container_name: techword-translator-mcp
+    environment:
+      - TECHWORD_TRANSLATOR_API_URL=${TECHWORD_TRANSLATOR_API_URL}
+      - MCP_SERVER_NAME=TechWord Translator
+      - MCP_SERVER_VERSION=1.0.0
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
