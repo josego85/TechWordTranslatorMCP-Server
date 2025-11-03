@@ -7,19 +7,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy pyproject.toml first for better layer caching
+# Copy only pyproject.toml first for better layer caching
 COPY pyproject.toml .
 
-# Install dependencies from pyproject.toml
+# Install dependencies by parsing pyproject.toml directly
+# Single source of truth: all dependencies defined in pyproject.toml only
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir \
-    "fastmcp>=0.2.0" \
-    "httpx>=0.27.0" \
-    "pydantic>=2.0.0" \
-    "python-dotenv>=1.0.0"
+    # Parse and install production dependencies
+    python -c "import tomllib; f=open('pyproject.toml','rb'); d=tomllib.load(f); \
+        deps = d['project']['dependencies']; \
+        [print(dep) for dep in deps]" | xargs pip install --no-cache-dir && \
+    # Parse and install dev dependencies
+    python -c "import tomllib; f=open('pyproject.toml','rb'); d=tomllib.load(f); \
+        deps = d['project']['optional-dependencies']['dev']; \
+        [print(dep) for dep in deps]" | xargs pip install --no-cache-dir
 
-# Copy source code
+# Copy source code and tests after dependencies are installed
 COPY src/ ./src/
+COPY tests/ ./tests/
 
 # Set Python path to find the module
 ENV PYTHONPATH=/app/src

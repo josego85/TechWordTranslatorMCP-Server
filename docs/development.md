@@ -63,6 +63,33 @@ The project follows **SOLID principles** with clear separation of concerns:
 - **server.py**: FastMCP server and tool definitions
 - **formatters.py**: Response formatting for user display
 
+## Dependency Management
+
+**Single source of truth**: All dependencies are defined in `pyproject.toml` (PEP 621).
+
+### Adding Dependencies
+
+```toml
+# pyproject.toml
+[project]
+dependencies = [
+    "new-package>=1.0.0",  # Production dependency
+]
+
+[project.optional-dependencies]
+dev = [
+    "new-dev-tool>=2.0.0",  # Development dependency
+]
+```
+
+Then rebuild:
+```bash
+docker-compose build
+./run-tests.sh
+```
+
+**Note**: No `requirements.txt` needed. Docker parses `pyproject.toml` directly.
+
 ## Development Setup
 
 ### 1. Clone Repository
@@ -87,17 +114,13 @@ TECHWORD_TRANSLATOR_API_URL=http://localhost:8000
 ### 3. Build Docker Image
 
 ```bash
-docker build -t techword-mcp .
+docker compose build
 ```
 
 ### 4. Run Tests
 
 ```bash
-# Using Docker
-docker run --rm techword-mcp pytest tests/
-
-# Or locally
-pytest tests/
+./run-tests.sh
 ```
 
 ## Code Style

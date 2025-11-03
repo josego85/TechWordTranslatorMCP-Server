@@ -2,10 +2,16 @@ services:
   techword-mcp:
     build: .
     container_name: techword-translator-mcp
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./htmlcov:/app/htmlcov
     environment:
-      - TECHWORD_TRANSLATOR_API_URL=${TECHWORD_TRANSLATOR_API_URL}
+      - TECHWORD_TRANSLATOR_API_URL=${TECHWORD_TRANSLATOR_API_URL:-https://techwordtranslator.onrender.com}
       - MCP_SERVER_NAME=TechWord Translator
       - MCP_SERVER_VERSION=1.0.0
     restart: unless-stopped
     stdin_open: true
     tty: true
+    # Default: run the MCP server
+    # Override with: docker-compose run --rm techword-mcp pytest

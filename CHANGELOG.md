@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-11-03
+
+### Added
+- Comprehensive test suite with 158 tests and 99% code coverage
+- `run-tests.sh` script for easy test execution
+- Testing documentation in `docs/testing.md`
+- pytest configuration in `pyproject.toml` with coverage reports
+- Additional dev dependencies: `pytest-cov`, `pytest-mock`, `respx`
+- Test fixtures and mocks in `tests/conftest.py`
+- Unit tests for all core modules (models, API client, services, formatters)
+- Integration tests for MCP server tools
+
+### Changed
+- Refactored Dockerfile to parse dependencies from `pyproject.toml` directly (single source of truth)
+- Updated docker-compose.yml with development volumes for hot-reloading (`src/`, `tests/`, `htmlcov/`)
+- Set default API URL in docker-compose.yml to production endpoint
+- Enhanced development documentation with dependency management guide
+
 ## [0.1.0] - 2025-11-03
 
 ### Added

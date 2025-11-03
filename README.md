@@ -9,6 +9,15 @@ A public Model Context Protocol (MCP) server that provides translation services 
 - 📚 **Comprehensive Database**: Access to a curated database of IT and technology terminology
 - ⚡ **Fast & Efficient**: Built on FastMCP with async HTTP client
 - 🔌 **Easy Integration**: Works with Claude Desktop, Cursor, and other MCP clients
+- ✅ **Production Ready**: Comprehensive test suite, high coverage, enterprise-grade quality
+
+## 🧪 Testing
+
+```bash
+./run-tests.sh
+```
+
+See [docs/testing.md](docs/testing.md) for details.
 
 ## 🚀 Quick Start
 
@@ -31,6 +40,7 @@ docker run --rm -i \
 | [Docker Setup](docs/docker-setup.md) | Detailed Docker configuration guide |
 | [Cursor Setup](docs/cursor-setup.md) | Integrate with Cursor IDE |
 | [Development](docs/development.md) | Developer guide and architecture |
+| [Testing](docs/testing.md) | Testing guide and coverage |
 | [Deployment](docs/deployment.md) | Production deployment options |
 
 ## 🛠️ Available Tools
