@@ -1,24 +1,22 @@
 """Domain models for words and translations."""
 
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
 
 
-class Translation(BaseModel):
-    """Translation model for Spanish and German translations."""
+class TranslationItem(BaseModel):
+    """Single translation entry."""
 
-    id: int
-    word_id: int
-    spanish_word: str
-    german_word: str
+    language: str
+    translation: str
 
 
 class Word(BaseModel):
-    """Word model (English word)."""
+    """Word model with embedded translations."""
 
     id: int
-    english_word: str
-    translation: Optional[Translation] = None
+    word: str
+    translations: List[TranslationItem] = []
 
     def get_translation(self, locale: str) -> Optional[str]:
         """Get translation for a specific locale.
@@ -29,25 +27,11 @@ class Word(BaseModel):
         Returns:
             Translated term or None if not found
         """
-        if locale == "en":
-            return self.english_word
-
-        if not self.translation:
-            return None
-
-        if locale == "es":
-            return self.translation.spanish_word
-        elif locale == "de":
-            return self.translation.german_word
-
+        for t in self.translations:
+            if t.language == locale:
+                return t.translation
         return None
 
     def get_all_translations(self) -> dict[str, str]:
         """Get all translations as a dictionary."""
-        result = {"en": self.english_word}
-
-        if self.translation:
-            result["es"] = self.translation.spanish_word
-            result["de"] = self.translation.german_word
-
-        return result
+        return {t.language: t.translation for t in self.translations}

@@ -5,7 +5,7 @@ from typing import Optional
 import httpx
 from dotenv import load_dotenv
 
-from ..models import Word, WordsResponse, Translation
+from ..models import Word, WordsResponse
 
 load_dotenv()
 
@@ -74,22 +74,6 @@ class APIClient:
         response.raise_for_status()
 
         return Word(**response.json())
-
-    async def fetch_translation(self, word_id: int) -> Optional[Translation]:
-        """Fetch translation for a word.
-
-        Args:
-            word_id: ID of the word
-
-        Returns:
-            Translation object or None if not found
-        """
-        try:
-            response = await self.client.get(f"/api/v1/translations/{word_id}")
-            response.raise_for_status()
-            return Translation(**response.json())
-        except httpx.HTTPError:
-            return None
 
     async def close(self):
         """Close the HTTP client."""

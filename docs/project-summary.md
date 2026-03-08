@@ -126,7 +126,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions
 ```env
 TECHWORD_TRANSLATOR_API_URL=https://api.example.com
 MCP_SERVER_NAME=TechWord Translator
-MCP_SERVER_VERSION=1.0.0
+MCP_SERVER_VERSION=0.3.0
 ```
 
 ### Claude Desktop Integration

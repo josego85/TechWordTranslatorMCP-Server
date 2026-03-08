@@ -1,10 +1,22 @@
 """Pytest configuration and fixtures for testing."""
 
-import os
 import pytest
 from unittest.mock import AsyncMock
-from techword_translator.models.word import Word, Translation
+from techword_translator.models.word import Word, TranslationItem
 from techword_translator.models.api import WordsResponse, PaginationMeta
+
+
+@pytest.fixture(autouse=True)
+def reset_service_container():
+    """Reset global service instances between tests to avoid state leakage."""
+    import techword_translator.container as container
+    container._api_client = None
+    container._search_service = None
+    container._translator_service = None
+    yield
+    container._api_client = None
+    container._search_service = None
+    container._translator_service = None
 
 
 @pytest.fixture
@@ -12,64 +24,31 @@ def mock_env_vars(monkeypatch):
     """Mock environment variables for testing."""
     monkeypatch.setenv("TECHWORD_TRANSLATOR_API_URL", "https://api.test.com")
     monkeypatch.setenv("MCP_SERVER_NAME", "Test Server")
-    monkeypatch.setenv("MCP_SERVER_VERSION", "1.0.0-test")
-
-
-@pytest.fixture
-def sample_translation():
-    """Create a sample translation with all languages."""
-    return Translation(
-        id=1,
-        word_id=1,
-        spanish_word="computadora",
-        german_word="Computer",
-    )
-
-
-@pytest.fixture
-def sample_translation_keyboard():
-    """Create a sample translation for keyboard."""
-    return Translation(
-        id=2,
-        word_id=2,
-        spanish_word="teclado",
-        german_word="Tastatur",
-    )
-
-
-@pytest.fixture
-def sample_translation_mouse():
-    """Create a sample translation for mouse."""
-    return Translation(
-        id=3,
-        word_id=3,
-        spanish_word="ratón",
-        german_word="Maus",
-    )
 
 
 @pytest.fixture
 def sample_word_with_translation():
-    """Create a sample Word with translation."""
+    """Create a sample Word with all translations."""
     return Word(
         id=1,
-        english_word="computer",
-        translation=Translation(
-            id=1,
-            word_id=1,
-            spanish_word="computadora",
-            german_word="Computer",
-        ),
+        word="computer",
+        translations=[
+            TranslationItem(language="en", translation="computer"),
+            TranslationItem(language="es", translation="computadora"),
+            TranslationItem(language="de", translation="Computer"),
+        ],
     )
 
 
 @pytest.fixture
 def sample_word_without_translation():
-    """Create a sample Word without translation."""
+    """Create a sample Word with English only."""
     return Word(
         id=2,
-        english_word="keyboard",
-        translation=None,
+        word="keyboard",
+        translations=[
+            TranslationItem(language="en", translation="keyboard"),
+        ],
     )
 
 
@@ -79,22 +58,30 @@ def sample_words_list():
     return [
         Word(
             id=1,
-            english_word="computer",
-            translation=Translation(
-                id=1, word_id=1, spanish_word="computadora", german_word="Computer"
-            ),
+            word="computer",
+            translations=[
+                TranslationItem(language="en", translation="computer"),
+                TranslationItem(language="es", translation="computadora"),
+                TranslationItem(language="de", translation="Computer"),
+            ],
         ),
         Word(
             id=2,
-            english_word="keyboard",
-            translation=Translation(
-                id=2, word_id=2, spanish_word="teclado", german_word="Tastatur"
-            ),
+            word="keyboard",
+            translations=[
+                TranslationItem(language="en", translation="keyboard"),
+                TranslationItem(language="es", translation="teclado"),
+                TranslationItem(language="de", translation="Tastatur"),
+            ],
         ),
         Word(
             id=3,
-            english_word="mouse",
-            translation=Translation(id=3, word_id=3, spanish_word="ratón", german_word="Maus"),
+            word="mouse",
+            translations=[
+                TranslationItem(language="en", translation="mouse"),
+                TranslationItem(language="es", translation="ratón"),
+                TranslationItem(language="de", translation="Maus"),
+            ],
         ),
     ]
 
@@ -107,8 +94,6 @@ def sample_pagination_meta():
         per_page=10,
         next_cursor="cursor123",
         prev_cursor=None,
-        next_page_url="https://api.test.com/api/v1/words?cursor=cursor123",
-        prev_page_url=None,
     )
 
 
@@ -144,13 +129,11 @@ def api_client(mock_env_vars):
 
 
 @pytest.fixture
-def mock_search_service(mock_api_client):
+def mock_search_service():
     """Create a mock SearchService."""
     from techword_translator.services.search import SearchService
 
-    service = AsyncMock(spec=SearchService)
-    service.api_client = mock_api_client
-    return service
+    return AsyncMock(spec=SearchService)
 
 
 @pytest.fixture
@@ -162,13 +145,11 @@ def search_service(api_client):
 
 
 @pytest.fixture
-def mock_translator_service(mock_search_service):
+def mock_translator_service():
     """Create a mock TranslatorService."""
     from techword_translator.services.translator import TranslatorService
 
-    service = AsyncMock(spec=TranslatorService)
-    service.search_service = mock_search_service
-    return service
+    return AsyncMock(spec=TranslatorService)
 
 
 @pytest.fixture
@@ -187,7 +168,7 @@ def response_formatter():
     return ResponseFormatter()
 
 
-# API Response Mocks
+# API Response Mocks — match the actual API response format
 @pytest.fixture
 def mock_api_words_response():
     """Mock API response for /api/v1/words endpoint."""
@@ -195,23 +176,21 @@ def mock_api_words_response():
         "data": [
             {
                 "id": 1,
-                "english_word": "computer",
-                "translation": {
-                    "id": 1,
-                    "word_id": 1,
-                    "spanish_word": "computadora",
-                    "german_word": "Computer",
-                },
+                "word": "computer",
+                "translations": [
+                    {"language": "en", "translation": "computer"},
+                    {"language": "es", "translation": "computadora"},
+                    {"language": "de", "translation": "Computer"},
+                ],
             },
             {
                 "id": 2,
-                "english_word": "keyboard",
-                "translation": {
-                    "id": 2,
-                    "word_id": 2,
-                    "spanish_word": "teclado",
-                    "german_word": "Tastatur",
-                },
+                "word": "keyboard",
+                "translations": [
+                    {"language": "en", "translation": "keyboard"},
+                    {"language": "es", "translation": "teclado"},
+                    {"language": "de", "translation": "Tastatur"},
+                ],
             },
         ],
         "links": {
@@ -223,8 +202,6 @@ def mock_api_words_response():
             "per_page": 10,
             "next_cursor": "cursor123",
             "prev_cursor": None,
-            "next_url": "https://api.test.com/api/v1/words?cursor=cursor123",
-            "prev_url": None,
         },
     }
 
@@ -234,24 +211,12 @@ def mock_api_word_response():
     """Mock API response for /api/v1/words/{id} endpoint."""
     return {
         "id": 1,
-        "english_word": "computer",
-        "translation": {
-            "id": 1,
-            "word_id": 1,
-            "spanish_word": "computadora",
-            "german_word": "Computer",
-        },
-    }
-
-
-@pytest.fixture
-def mock_api_translation_response():
-    """Mock API response for /api/v1/words/{id}/translation endpoint."""
-    return {
-        "id": 1,
-        "word_id": 1,
-        "spanish_word": "computadora",
-        "german_word": "Computer",
+        "word": "computer",
+        "translations": [
+            {"language": "en", "translation": "computer"},
+            {"language": "es", "translation": "computadora"},
+            {"language": "de", "translation": "Computer"},
+        ],
     }
 
 
@@ -266,7 +231,5 @@ def mock_api_empty_response():
             "per_page": 10,
             "next_cursor": None,
             "prev_cursor": None,
-            "next_url": None,
-            "prev_url": None,
         },
     }

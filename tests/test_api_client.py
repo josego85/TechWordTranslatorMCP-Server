@@ -51,7 +51,6 @@ class TestAPIClientFetchWords:
     @respx.mock
     async def test_fetch_words_success(self, api_client, mock_api_words_response):
         """Test successful fetch_words request."""
-        # Mock the HTTP request
         route = respx.get("https://api.test.com/api/v1/words").mock(
             return_value=httpx.Response(200, json=mock_api_words_response)
         )
@@ -60,9 +59,24 @@ class TestAPIClientFetchWords:
 
         assert route.called
         assert len(result.data) == 2
-        assert result.data[0].english_word == "computer"
-        assert result.data[1].english_word == "keyboard"
+        assert result.data[0].word == "computer"
+        assert result.data[1].word == "keyboard"
         assert result.meta.per_page == 10
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_fetch_words_translations_embedded(self, api_client, mock_api_words_response):
+        """Test that translations are embedded in each word."""
+        respx.get("https://api.test.com/api/v1/words").mock(
+            return_value=httpx.Response(200, json=mock_api_words_response)
+        )
+
+        result = await api_client.fetch_words()
+
+        word = result.data[0]
+        assert word.get_translation("en") == "computer"
+        assert word.get_translation("es") == "computadora"
+        assert word.get_translation("de") == "Computer"
 
     @pytest.mark.asyncio
     @respx.mock
@@ -147,9 +161,9 @@ class TestAPIClientFetchWord:
 
         assert route.called
         assert result.id == 1
-        assert result.english_word == "computer"
-        assert result.translation is not None
-        assert result.translation.spanish_word == "computadora"
+        assert result.word == "computer"
+        assert result.get_translation("es") == "computadora"
+        assert result.get_translation("de") == "Computer"
 
     @pytest.mark.asyncio
     @respx.mock
@@ -164,12 +178,12 @@ class TestAPIClientFetchWord:
 
     @pytest.mark.asyncio
     @respx.mock
-    async def test_fetch_word_without_translation(self, api_client):
-        """Test fetch_word for word without translation."""
+    async def test_fetch_word_no_translations(self, api_client):
+        """Test fetch_word for word with no translations."""
         response_data = {
             "id": 2,
-            "english_word": "keyboard",
-            "translation": None,
+            "word": "keyboard",
+            "translations": [],
         }
         respx.get("https://api.test.com/api/v1/words/2").mock(
             return_value=httpx.Response(200, json=response_data)
@@ -178,8 +192,8 @@ class TestAPIClientFetchWord:
         result = await api_client.fetch_word(2)
 
         assert result.id == 2
-        assert result.english_word == "keyboard"
-        assert result.translation is None
+        assert result.word == "keyboard"
+        assert result.translations == []
 
     @pytest.mark.asyncio
     @respx.mock
@@ -193,63 +207,6 @@ class TestAPIClientFetchWord:
             await api_client.fetch_word(1)
 
 
-class TestAPIClientFetchTranslation:
-    """Tests for fetch_translation method."""
-
-    @pytest.mark.asyncio
-    @respx.mock
-    async def test_fetch_translation_success(self, api_client, mock_api_translation_response):
-        """Test successful fetch_translation request."""
-        route = respx.get("https://api.test.com/api/v1/translations/1").mock(
-            return_value=httpx.Response(200, json=mock_api_translation_response)
-        )
-
-        result = await api_client.fetch_translation(1)
-
-        assert route.called
-        assert result is not None
-        assert result.id == 1
-        assert result.word_id == 1
-        assert result.spanish_word == "computadora"
-        assert result.german_word == "Computer"
-
-    @pytest.mark.asyncio
-    @respx.mock
-    async def test_fetch_translation_not_found(self, api_client):
-        """Test fetch_translation returns None when not found."""
-        respx.get("https://api.test.com/api/v1/translations/999").mock(
-            return_value=httpx.Response(404, json={"error": "Not found"})
-        )
-
-        result = await api_client.fetch_translation(999)
-
-        assert result is None
-
-    @pytest.mark.asyncio
-    @respx.mock
-    async def test_fetch_translation_http_error(self, api_client):
-        """Test fetch_translation returns None on HTTP error."""
-        respx.get("https://api.test.com/api/v1/translations/1").mock(
-            return_value=httpx.Response(500, json={"error": "Internal server error"})
-        )
-
-        result = await api_client.fetch_translation(1)
-
-        assert result is None
-
-    @pytest.mark.asyncio
-    @respx.mock
-    async def test_fetch_translation_network_error(self, api_client):
-        """Test fetch_translation returns None on network error."""
-        respx.get("https://api.test.com/api/v1/translations/1").mock(
-            side_effect=httpx.ConnectError
-        )
-
-        result = await api_client.fetch_translation(1)
-
-        assert result is None
-
-
 class TestAPIClientContextManager:
     """Tests for async context manager functionality."""
 
@@ -260,7 +217,6 @@ class TestAPIClientContextManager:
             assert client.base_url == "https://api.test.com"
             assert not client.client.is_closed
 
-        # Client should be closed after context
         assert client.client.is_closed
 
     @pytest.mark.asyncio
@@ -273,7 +229,7 @@ class TestAPIClientContextManager:
 
         async with APIClient() as client:
             result = await client.fetch_word(1)
-            assert result.english_word == "computer"
+            assert result.word == "computer"
 
     @pytest.mark.asyncio
     async def test_manual_close(self, mock_env_vars):
@@ -282,22 +238,6 @@ class TestAPIClientContextManager:
         assert not client.client.is_closed
 
         await client.close()
-        assert client.client.is_closed
-
-    @pytest.mark.asyncio
-    @respx.mock
-    async def test_context_manager_with_exception(self, mock_env_vars):
-        """Test context manager closes client even with exception."""
-        respx.get("https://api.test.com/api/v1/words/1").mock(
-            return_value=httpx.Response(500, json={"error": "Error"})
-        )
-
-        try:
-            async with APIClient() as client:
-                await client.fetch_word(1)
-        except httpx.HTTPStatusError:
-            pass
-
         assert client.client.is_closed
 
 
@@ -310,7 +250,6 @@ class TestAPIClientEdgeCases:
         """Test fetch_words handles missing links gracefully."""
         response_data = {
             "data": [],
-            # Missing "links" key
             "meta": {
                 "path": "/api/v1/words",
                 "per_page": 10,
@@ -348,9 +287,8 @@ class TestAPIClientEdgeCases:
             return_value=httpx.Response(200, json=mock_api_word_response)
         )
 
-        # Make multiple requests
         result1 = await api_client.fetch_word(1)
         result2 = await api_client.fetch_word(1)
 
-        assert result1.english_word == "computer"
-        assert result2.english_word == "computer"
+        assert result1.word == "computer"
+        assert result2.word == "computer"

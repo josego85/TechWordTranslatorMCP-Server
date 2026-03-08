@@ -74,7 +74,7 @@ services:
     environment:
       - TECHWORD_TRANSLATOR_API_URL=${TECHWORD_TRANSLATOR_API_URL}
       - MCP_SERVER_NAME=TechWord Translator
-      - MCP_SERVER_VERSION=1.0.0
+      - MCP_SERVER_VERSION=0.3.0
     restart: unless-stopped
     stdin_open: true
     tty: true
@@ -125,7 +125,7 @@ docker run -d \
   --name techword-translator-mcp \
   -e TECHWORD_TRANSLATOR_API_URL=https://your-api-url.com \
   -e MCP_SERVER_NAME="TechWord Translator" \
-  -e MCP_SERVER_VERSION="1.0.0" \
+  -e MCP_SERVER_VERSION="0.3.0" \
   techword-mcp
 ```
 

@@ -248,7 +248,7 @@ class MyService:
 |----------|-------------|---------|----------|
 | `TECHWORD_TRANSLATOR_API_URL` | Backend API URL | - | Yes |
 | `MCP_SERVER_NAME` | Server display name | "TechWord Translator" | No |
-| `MCP_SERVER_VERSION` | Server version | "1.0.0" | No |
+| `MCP_SERVER_VERSION` | Server version | "0.3.0" | No |
 
 ## Debugging
 

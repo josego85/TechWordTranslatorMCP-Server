@@ -47,11 +47,7 @@ class SearchService:
                 if len(results) >= limit:
                     break
 
-                # Load translation if needed
-                if not word.translation:
-                    word.translation = await self.api.fetch_translation(word.id)
-
-                # Check if matches
+                # Check if matches (translations are already embedded)
                 if self._matches_search(word, term_lower, locale):
                     results.append(word)
 
@@ -74,17 +70,10 @@ class SearchService:
         Returns:
             True if word matches
         """
-        # Search in English
-        if (locale is None or locale == "en") and term_lower in word.english_word.lower():
-            return True
-
-        # Search in other languages
-        if word.translation:
-            if (locale is None or locale == "es") and term_lower in word.translation.spanish_word.lower():
-                return True
-
-            if (locale is None or locale == "de") and term_lower in word.translation.german_word.lower():
-                return True
+        for t in word.translations:
+            if locale is None or t.language == locale:
+                if term_lower in t.translation.lower():
+                    return True
 
         return False
 

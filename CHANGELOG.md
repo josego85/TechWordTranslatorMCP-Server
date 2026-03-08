@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+---
+
+## [Unreleased]
+
+---
+
+## [0.3.0] - 2026-03-08
+
+### Added
+
+- `container.py` — service singleton lifecycle extracted from `server.py` (SRP)
+- `tools.py` — all 5 MCP tool functions as plain async functions, single `VALID_LOCALES` constant
+- `.docker/dev/Dockerfile` — dedicated dev Dockerfile replacing root-level `Dockerfile`
+- `.markdownlint.json` — linter config to allow duplicate headings across changelog versions
+
+### Changed
+
+- `server.py` refactored into thin entry point (22 lines): registers tools and runs MCP server
+- `Word` model rewritten to match current API response (`translations: [{language, translation}]`)
+- Upgraded to Python 3.12 and Debian 13 (Trixie) in Docker image
+- All package constraints updated to match currently installed versions
+- `docker-compose.yml`: Dockerfile path updated, volumes set to `:ro`, UID/GID build args added so container user matches host developer
+- `coverage.xml` and `.venv/` added to `.gitignore`
+
+### Removed
+
+- Root-level `Dockerfile` (moved to `.docker/dev/`)
+- `fetch_translation()` from `APIClient` (dead code — API embeds translations in word response)
+- `htmlcov/` volume mount from docker-compose (HTML coverage report removed)
+
+---
+
 ## [0.2.0] - 2025-11-03
 
 ### Added
@@ -22,6 +54,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated docker-compose.yml with development volumes for hot-reloading (`src/`, `tests/`, `htmlcov/`)
 - Set default API URL in docker-compose.yml to production endpoint
 - Enhanced development documentation with dependency management guide
+
+---
 
 ## [0.1.0] - 2025-11-03
 
