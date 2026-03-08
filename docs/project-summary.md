@@ -1,32 +1,23 @@
 # TechWord Translator MCP Server - Project Summary
 
 ## Overview
+
 Professional MCP (Model Context Protocol) server that provides translation services for technical terms across English, Spanish, and German. Built with FastMCP and powered by the TechWordTranslator API.
 
 ## Architecture
 
 ### Core Components
 
-1. **Server Module** (`src/techword_mcp/server.py`)
-   - FastMCP server implementation
-   - 5 MCP tools for technical term translation
-   - Async request handling
-   - Automatic cleanup on shutdown
-
-2. **HTTP Client** (`src/techword_mcp/client.py`)
-   - Async HTTP client using httpx
-   - Connection reuse and pooling
-   - Smart pagination handling
-
-3. **Data Models** (`src/techword_mcp/models.py`)
-   - Pydantic models for type safety
-   - Word, Translation, and response models
-   - Built-in validation
+1. **server.py** (`src/techword_translator/server.py`) — Thin entry point: registers tools and starts FastMCP
+2. **tools.py** (`src/techword_translator/tools.py`) — All 5 MCP tool implementations as plain async functions
+3. **container.py** (`src/techword_translator/container.py`) — Service singleton lifecycle (dependency container)
+4. **APIClient** (`src/techword_translator/services/api_client.py`) — Async HTTP client using httpx with pagination support
+5. **Data Models** (`src/techword_translator/models/word.py`) — `Word` and `TranslationItem` Pydantic models
 
 ### MCP Tools
 
 | Tool | Description | Parameters |
-|------|-------------|-----------|
+| ---- | ----------- | ---------- |
 | `translate_term` | Translate between languages | term, from_locale, to_locale |
 | `search_tech_terms` | Search with partial matching | term, locale (optional), limit |
 | `get_all_translations` | Get all translations for a term | term, source_locale |
@@ -34,95 +25,106 @@ Professional MCP (Model Context Protocol) server that provides translation servi
 | `list_tech_terms` | List with pagination | page_size, cursor |
 
 ### Supported Languages
+
 - **en** - English
 - **es** - Spanish (Español)
 - **de** - German (Deutsch)
 
 ## Project Structure
 
-```
+```text
 TechWordTranslatorMCP-Server/
+├── .docker/
+│   └── dev/
+│       └── Dockerfile           # Dev Docker image (Python 3.12, Debian Trixie)
 ├── src/
-│   └── techword_mcp/
-│       ├── __init__.py          # Package initialization
-│       ├── __main__.py          # Entry point
-│       ├── server.py            # FastMCP server (5 tools)
-│       ├── client.py            # Async HTTP client
-│       └── models.py            # Pydantic models
+│   └── techword_translator/
+│       ├── __init__.py
+│       ├── server.py            # Thin entry point
+│       ├── tools.py             # 5 MCP tool implementations
+│       ├── container.py         # Service dependency container
+│       ├── formatters.py        # Response formatters
+│       ├── models/
+│       │   ├── __init__.py
+│       │   └── word.py          # Word, TranslationItem models
+│       └── services/
+│           ├── api_client.py    # Async HTTP client
+│           ├── search.py        # Search logic
+│           └── translator.py    # Translation logic
 ├── tests/
-│   ├── __init__.py
-│   └── test_client.py           # Client tests
-├── pyproject.toml               # Python project configuration
-├── Dockerfile                   # Docker container definition
-├── docker-compose.yml           # Docker Compose configuration
-├── .env.example                 # Environment variables template
-├── .gitignore                   # Git ignore rules
-├── LICENSE                      # GPL-3.0 License
-├── README.md                    # Main documentation
-├── QUICKSTART.md                # Quick start guide
-├── DOCKER_SETUP.md              # Docker installation guide
-├── DEPLOYMENT.md                # Deployment guide
-├── PROJECT_SUMMARY.md           # This file
-└── claude_desktop_config.example.json  # Claude Desktop config
-
-Total: 4 directories, 21 files
+│   ├── conftest.py
+│   ├── test_models.py
+│   ├── test_api_client.py
+│   ├── test_search_service.py
+│   ├── test_translator_service.py
+│   ├── test_formatters.py
+│   └── test_server_integration.py
+├── docs/                        # Documentation
+├── pyproject.toml
+├── docker-compose.yml
+├── .env.example
+├── .markdownlint.json
+└── README.md
 ```
 
 ## Technical Stack
 
 ### Core Dependencies
-- **FastMCP** (>=0.2.0) - MCP server framework
-- **httpx** (>=0.27.0) - Async HTTP client
-- **Pydantic** (>=2.0.0) - Data validation
-- **python-dotenv** (>=1.0.0) - Environment management
+
+- **FastMCP** (>=3.1.0) - MCP server framework
+- **httpx** (>=0.28.0) - Async HTTP client
+- **Pydantic** (>=2.12.0) - Data validation
+- **python-dotenv** (>=1.2.0) - Environment management
 
 ### Python Version
-- Python 3.10 or higher
+
+- Python 3.12 or higher
 
 ## Features
 
 ### Security
-✓ Secure configuration via environment variables
-✓ No hardcoded secrets
-✓ Docker security best practices
+
+- Secure configuration via environment variables
+- No hardcoded secrets
+- Non-root Docker user with host UID/GID matching
 
 ### Performance
-✓ Async/await throughout
-✓ HTTP connection pooling
-✓ Efficient cursor-based pagination
-✓ Minimal memory footprint
+
+- Async/await throughout
+- HTTP connection pooling
+- Efficient cursor-based pagination
 
 ### Developer Experience
-✓ Type hints everywhere
-✓ Pydantic validation
-✓ Clear error messages
-✓ Comprehensive documentation
-✓ Example configurations
 
-### Deployment Options
-✓ Docker / Docker Compose
-✓ Local installation
+- Type hints everywhere
+- Pydantic validation
+- 151 tests, 99% coverage
+- Read-only volume mounts in Docker dev environment
 
 ## Installation Methods
 
-### 1. Docker (Quick Testing)
+### 1. Docker (Recommended)
+
 ```bash
 docker compose build
 docker compose up -d
 ```
 
-### 2. Local Python (Claude Desktop)
+### 2. Local Python
+
 ```bash
 pip install -e .
-python -m techword_mcp.server
+python -m techword_translator
 ```
 
-### 3. Cloud Deployment
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions
+### 3. Deployment
+
+See [deployment.md](deployment.md) for detailed instructions.
 
 ## Configuration
 
 ### Environment Variables
+
 ```env
 TECHWORD_TRANSLATOR_API_URL=https://api.example.com
 MCP_SERVER_NAME=TechWord Translator
@@ -130,12 +132,13 @@ MCP_SERVER_VERSION=0.3.0
 ```
 
 ### Claude Desktop Integration
+
 ```json
 {
   "mcpServers": {
     "techword-translator": {
       "command": "python",
-      "args": ["-m", "techword_mcp.server"],
+      "args": ["-m", "techword_translator"],
       "env": {
         "TECHWORD_TRANSLATOR_API_URL": "https://your-api-url.com"
       }
@@ -147,18 +150,21 @@ MCP_SERVER_VERSION=0.3.0
 ## Usage Examples
 
 ### Translate a term
+
 ```python
 translate_term(term="computer", from_locale="en", to_locale="es")
 # Output: computer (en) → computadora (es)
 ```
 
 ### Search for terms
+
 ```python
 search_tech_terms(term="soft", locale="en", limit=5)
 # Returns matching terms containing "soft"
 ```
 
 ### Get all translations
+
 ```python
 get_all_translations(term="database", source_locale="en")
 # Returns translations in all available languages
@@ -167,19 +173,22 @@ get_all_translations(term="database", source_locale="en")
 ## Development
 
 ### Running Tests
+
 ```bash
-pytest tests/
+docker compose run --rm techword-mcp pytest
 ```
 
 ### Code Formatting
+
 ```bash
 black src/
 ruff check src/
 ```
 
 ### Building Docker Image
+
 ```bash
-docker build -t techword-mcp .
+docker compose build
 ```
 
 ## API Integration
@@ -193,23 +202,17 @@ This server integrates with the [TechWordTranslator API](https://github.com/jose
 ## Documentation
 
 | Document | Purpose |
-|----------|---------|
-| [README.md](README.md) | Complete project documentation |
-| [QUICKSTART.md](QUICKSTART.md) | Get started in 5 minutes |
-| [DOCKER_SETUP.md](DOCKER_SETUP.md) | Docker installation guide |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | Production deployment guide |
-
-## Contributing
-
-Contributions welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+| -------- | ------- |
+| [README.md](../README.md) | Main project documentation |
+| [quickstart.md](quickstart.md) | Get started in 5 minutes |
+| [docker-setup.md](docker-setup.md) | Docker configuration guide |
+| [deployment.md](deployment.md) | Production deployment guide |
+| [testing.md](testing.md) | Testing guide and coverage |
+| [development.md](development.md) | Developer guide and architecture |
 
 ## License
 
-GNU General Public License v3.0 - see [LICENSE](LICENSE) file
+GNU General Public License v3.0 - see [LICENSE](../LICENSE) file
 
 ## Credits
 
@@ -217,18 +220,12 @@ GNU General Public License v3.0 - see [LICENSE](LICENSE) file
 - **FastMCP** - MCP framework
 - **Anthropic** - MCP protocol specification
 
-## Support
-
-- GitHub Issues: Report bugs and request features
-- Documentation: Comprehensive guides included
-- MCP Community: Join the MCP developer community
-
 ## Version
 
-Current version: **1.0.0**
+Current version: **0.3.0**
 
 Status: ✅ Production Ready
 
 ---
 
-Built with ❤️ using FastMCP and Python
+Built with FastMCP and Python 3.12

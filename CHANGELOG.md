@@ -7,10 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
-
----
-
 ## [0.3.0] - 2026-03-08
 
 ### Added
@@ -28,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All package constraints updated to match currently installed versions
 - `docker-compose.yml`: Dockerfile path updated, volumes set to `:ro`, UID/GID build args added so container user matches host developer
 - `coverage.xml` and `.venv/` added to `.gitignore`
+- Docs updated to reflect v0.3.0: Python 3.12+, new module structure (`tools.py`, `container.py`), Dockerfile path, test count (151), package constraints
+- `project-summary.md` rewritten — old `techword_mcp` module references replaced with `techword_translator`, structure and links corrected
+- `docker-setup.md` docker-compose example updated to match current `docker-compose.yml`
 
 ### Removed
 

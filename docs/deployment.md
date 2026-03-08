@@ -12,18 +12,15 @@ Deploy on any server with Docker installed.
 
 1. Build the image:
    ```bash
-   docker build -t techword-mcp .
+   docker compose build
    ```
 
 2. Run with environment variables:
    ```bash
-   docker run -d \
-     -e TECHWORD_TRANSLATOR_API_URL=your-api-url \
-     --name techword-mcp \
-     techword-mcp
+   docker compose up -d
    ```
 
-**Using Docker Compose:**
+**Using `.env` file:**
 
 1. Create a `.env` file:
    ```env
@@ -32,7 +29,7 @@ Deploy on any server with Docker installed.
 
 2. Start the service:
    ```bash
-   docker-compose up -d
+   docker compose up -d
    ```
 
 ## Connecting Clients to Public Server
@@ -50,7 +47,7 @@ You'll need to create an HTTP wrapper that:
 **Option B: Direct Distribution**
 Instead of hosting centrally, distribute the server as a package:
 1. Publish to PyPI: `pip install techword-translator-mcp`
-2. Users run locally: `python -m techword_mcp.server`
+2. Users run locally: `python -m techword_translator`
 3. Configuration via environment variables
 
 **Option C: Claude Desktop Integration**
@@ -60,7 +57,7 @@ Users install locally and configure in Claude Desktop:
   "mcpServers": {
     "techword-translator": {
       "command": "python",
-      "args": ["-m", "techword_mcp.server"]
+      "args": ["-m", "techword_translator"]
     }
   }
 }

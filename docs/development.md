@@ -4,7 +4,7 @@ Guide for developers contributing to or extending the TechWord Translator MCP Se
 
 ## Prerequisites
 
-- Python 3.11+
+- Python 3.12+
 - Docker (for containerized development)
 - TechWordTranslator API running locally
 
@@ -23,21 +23,26 @@ TechWordTranslatorMCP-Server/
 ├── src/
 │   └── techword_translator/   # Main package
 │       ├── __init__.py
-│       ├── __main__.py
-│       ├── server.py          # FastMCP server with tools
+│       ├── server.py          # Thin entry point (registers tools, starts MCP)
+│       ├── tools.py           # 5 MCP tool implementations
+│       ├── container.py       # Service singleton lifecycle
 │       ├── formatters.py      # Response formatting
 │       ├── models/            # Data models
 │       │   ├── __init__.py
-│       │   ├── word.py        # Word & Translation (domain)
-│       │   └── api.py         # API response models
+│       │   └── word.py        # Word & TranslationItem (domain)
 │       └── services/          # Business logic
 │           ├── __init__.py
 │           ├── api_client.py  # HTTP client
 │           ├── search.py      # Search logic
 │           └── translator.py  # Translation service
-├── tests/                     # Test suite
-│   ├── __init__.py
-│   └── test_client.py
+├── tests/                     # Test suite (151 tests, 99% coverage)
+│   ├── conftest.py
+│   ├── test_models.py
+│   ├── test_api_client.py
+│   ├── test_search_service.py
+│   ├── test_translator_service.py
+│   ├── test_formatters.py
+│   └── test_server_integration.py
 ├── Dockerfile                 # Docker container definition
 ├── docker-compose.yml         # Docker Compose config
 ├── pyproject.toml            # Package configuration

@@ -15,9 +15,9 @@
 
 ## Test Results
 
-- **158 tests** - 100% passing ✅
-- **99% coverage** - 269/270 lines covered
-- **~1.5s** execution time
+- **151 tests** - 100% passing ✅
+- **99% coverage** - 238/239 lines covered
+- **~1.1s** execution time
 
 ## Test Structure
 
@@ -52,7 +52,7 @@ tests/
 ### Coverage Report
 ```bash
 ./run-tests.sh coverage
-# Opens htmlcov/index.html
+# Generates coverage.xml (for CI/CD tools like Codecov, SonarQube)
 ```
 
 ### Specific Test
@@ -87,11 +87,10 @@ pytest -v
 
 ## Coverage
 
-View detailed coverage:
+Coverage is reported as XML (for CI/CD integration):
 ```bash
 ./run-tests.sh coverage
-open htmlcov/index.html  # macOS
-xdg-open htmlcov/index.html  # Linux
+# Outputs coverage.xml — consume with Codecov, SonarQube, or similar
 ```
 
 ## Writing Tests

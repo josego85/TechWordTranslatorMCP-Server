@@ -22,13 +22,9 @@ See [docs/testing.md](docs/testing.md) for details.
 ## 🚀 Quick Start
 
 ```bash
-# Build the Docker image
-docker build -t techword-mcp .
-
-# Run the server
-docker run --rm -i \
-  -e TECHWORD_TRANSLATOR_API_URL=http://localhost:8000 \
-  techword-mcp
+# Build and run with Docker Compose
+docker compose build
+docker compose run --rm -e TECHWORD_TRANSLATOR_API_URL=http://localhost:8000 techword-mcp
 ```
 
 ## 📖 Documentation
@@ -82,14 +78,16 @@ See the complete [Cursor Setup Guide](docs/cursor-setup.md) for integration step
 
 Built following SOLID principles with a clean, modular architecture:
 
-- **models/** - Domain models (Word, Translation) and API response models
-- **services/** - Business logic (APIClient, SearchService, TranslatorService)
+- **models/** - Domain models (`Word`, `TranslationItem`)
+- **services/** - Business logic (`APIClient`, `SearchService`, `TranslatorService`)
 - **formatters.py** - Response formatting utilities
-- **server.py** - FastMCP server with tool definitions
+- **tools.py** - All 5 MCP tool implementations
+- **container.py** - Service singleton lifecycle (dependency container)
+- **server.py** - Thin entry point: registers tools and starts the MCP server
 
 ## 📋 Requirements
 
-- Docker (recommended) or Python 3.11+
+- Docker (recommended) or Python 3.12+
 - TechWordTranslator API instance
 
 ### Environment Variables

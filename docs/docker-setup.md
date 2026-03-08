@@ -65,12 +65,18 @@ This is the easiest method for local development and testing.
 Ensure the `docker-compose.yml` file exists in your project root:
 
 ```yaml
-version: '3.8'
-
 services:
   techword-mcp:
-    build: .
+    build:
+      context: .
+      dockerfile: .docker/dev/Dockerfile
+      args:
+        UID: "${UID:-1000}"
+        GID: "${GID:-1000}"
     container_name: techword-translator-mcp
+    volumes:
+      - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
     environment:
       - TECHWORD_TRANSLATOR_API_URL=${TECHWORD_TRANSLATOR_API_URL}
       - MCP_SERVER_NAME=TechWord Translator
@@ -263,11 +269,11 @@ From inside the container:
 
 ```bash
 docker exec -it techword-translator-mcp python -c "
-from techword_mcp.client import TechWordAPIClient
+from techword_translator.services.api_client import APIClient
 import asyncio
 
 async def test():
-    async with TechWordAPIClient() as client:
+    async with APIClient() as client:
         words = await client.get_words(per_page=5)
         print(f'Connected! Found {len(words.data)} words')
 
@@ -358,7 +364,7 @@ Run the container locally and configure your MCP client to use it:
   "mcpServers": {
     "techword-translator": {
       "command": "docker",
-      "args": ["exec", "-i", "techword-translator-mcp", "python", "-m", "techword_mcp.server"]
+      "args": ["exec", "-i", "techword-translator-mcp", "python", "-m", "techword_translator"]
     }
   }
 }
@@ -379,7 +385,7 @@ Then configure:
   "mcpServers": {
     "techword-translator": {
       "command": "python",
-      "args": ["-m", "techword_mcp.server"],
+      "args": ["-m", "techword_translator"],
       "env": {
         "TECHWORD_TRANSLATOR_API_URL": "https://your-api-url.com"
       }
