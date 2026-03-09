@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- `CLAUDE.md` — developer guide for AI assistants and contributors covering architecture, MCP tools, testing patterns, security rules, common pitfalls, and extension guides
+
+---
+
 ## [0.3.0] - 2026-03-08
 
 ### Added
