@@ -22,7 +22,7 @@
 ```
 MCP Client (Claude/Cursor)
        │
-   tools.py            ← 5 MCP tool handlers (presentation layer)
+   tools.py            ← 6 MCP tool handlers (presentation layer)
        │
    formatters.py       ← Response formatting (presentation layer)
        │
@@ -50,7 +50,7 @@ MCP Client (Claude/Cursor)
 
 ---
 
-## MCP Tools (5 total)
+## MCP Tools (6 total)
 
 All tools are defined in `src/techword_translator/tools.py`.
 
@@ -61,6 +61,7 @@ All tools are defined in `src/techword_translator/tools.py`.
 | `get_all_translations` | `term`, `source_locale` | All translations of a term in a given language |
 | `get_term_details` | `word_id` | Full detail by numeric ID |
 | `list_tech_terms` | `page_size?`, `cursor?` | Cursor-paginated list of terms |
+| `create_tech_word` | `english_word`, `es_translation?`, `de_translation?` | Create a new term with optional translations (requires `TECHWORD_API_TOKEN`) |
 
 **Valid locales**: `en`, `es`, `de` — defined as `VALID_LOCALES` in `tools.py`.
 
@@ -71,6 +72,7 @@ All tools are defined in `src/techword_translator/tools.py`.
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `TECHWORD_TRANSLATOR_API_URL` | **Yes** | — | Base URL of TechWordTranslator API |
+| `TECHWORD_API_TOKEN` | No | — | Sanctum service token for write operations (`create_tech_word`); generate via `POST /api/v1/service-tokens` after JWT login; leave empty for read-only mode |
 | `MCP_SERVER_NAME` | No | `TechWord Translator` | Server name reported to MCP clients |
 | `MCP_SERVER_VERSION` | No | `0.3.0` | Server version reported to MCP clients |
 
@@ -125,9 +127,9 @@ python -m techword_translator.server
 docker compose run --rm techword-mcp pytest
 ```
 
-### Test Statistics (v0.3.0)
+### Test Statistics (current)
 
-- **151 tests** — 100% passing
+- **167 tests** — 100% passing
 - **99% code coverage** (branch coverage enabled)
 - **~1.1s** execution time
 
@@ -215,7 +217,8 @@ black src/ tests/ && ruff check src/ tests/
 
 ### What is safe here
 
-- **No credentials**: The backend API is public and requires no auth tokens.
+- **Read endpoints are public**: `fetch_words` and `fetch_word` never send auth headers — no token leak to public endpoints.
+- **Write token is optional**: `TECHWORD_API_TOKEN` is only stored in `_auth_headers` and passed explicitly to `create_word`/`create_translation`; absent → write operations return 401, server degrades gracefully to read-only.
 - **Input validation**: All inputs are validated by Pydantic before use.
 - **Non-root Docker**: Container runs as `appuser` (UID/GID matched to host developer).
 - **Read-only volumes**: Dev mounts use `:ro` to prevent container from writing to host.
@@ -226,7 +229,8 @@ black src/ tests/ && ruff check src/ tests/
 
 - **Never log or expose raw user input** without sanitization.
 - **Never hardcode `TECHWORD_TRANSLATOR_API_URL`** in source code — always read from env.
-- **Never add credentials/tokens** to `.env` (this file may be committed by mistake); use a secrets manager or runtime `-e` injection.
+- **Never commit `TECHWORD_API_TOKEN`** to `.env` if the file is tracked; inject via runtime `-e` flag or a secrets manager.
+- **Never add `TECHWORD_API_TOKEN` to shared `httpx.AsyncClient` headers** — pass `self._auth_headers` only to write methods.
 - **Never disable the pagination cap** without understanding the consequences.
 - **If you add a new tool parameter** that is user-controlled and used in URL construction, sanitize it explicitly — do not rely solely on Pydantic.
 
@@ -240,7 +244,7 @@ src/techword_translator/
 ├── __main__.py          # module entry point
 ├── server.py            # FastMCP init + dotenv load (22 lines — keep minimal)
 ├── container.py         # service singletons + get_services() context manager
-├── tools.py             # all 5 @mcp.tool() handlers
+├── tools.py             # all 6 @mcp.tool() handlers (5 read + 1 write)
 ├── formatters.py        # ResponseFormatter static methods
 ├── models/
 │   ├── word.py          # Word(id, word, translations=[TranslationItem])

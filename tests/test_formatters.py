@@ -247,6 +247,32 @@ class TestFormatAllTranslations:
         assert "Spanish: ratón" in result
 
 
+class TestFormatWordCreated:
+    """Tests for format_word_created method."""
+
+    def test_word_only_no_translations(self, response_formatter):
+        result = response_formatter.format_word_created(10, "algorithm", [])
+        assert "Word created: 'algorithm' (ID: 10)" in result
+        assert "Translations added" not in result
+
+    def test_word_with_translations(self, response_formatter):
+        result = response_formatter.format_word_created(10, "algorithm", ["es:algoritmo", "de:Algorithmus"])
+        assert "Word created: 'algorithm' (ID: 10)" in result
+        assert "Translations added:" in result
+        assert "[es] Spanish: algoritmo" in result
+        assert "[de] German: Algorithmus" in result
+
+    def test_word_with_spanish_only(self, response_formatter):
+        result = response_formatter.format_word_created(5, "cache", ["es:caché"])
+        assert "Word created: 'cache' (ID: 5)" in result
+        assert "[es] Spanish: caché" in result
+        assert "German" not in result
+
+    def test_unknown_language_code(self, response_formatter):
+        result = response_formatter.format_word_created(1, "test", ["fr:test"])
+        assert "[fr] fr: test" in result
+
+
 class TestFormatterEdgeCases:
     """Tests for edge cases."""
 

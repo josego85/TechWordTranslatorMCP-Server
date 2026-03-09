@@ -12,6 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `CLAUDE.md` — developer guide for AI assistants and contributors covering architecture, MCP tools, testing patterns, security rules, common pitfalls, and extension guides
+- `create_tech_word(english_word, es_translation?, de_translation?)` MCP tool — creates a new technical term with optional translations; word errors abort early, translation errors are reported inline per language without aborting the word creation
+- `APIClient.create_word(english_word)` — POST `/api/v1/words` with auth headers; returns `Word` or raises `httpx.HTTPStatusError`
+- `APIClient.create_translation(word_id, language, translation)` — POST `/api/v1/translations` with auth headers; returns raw response dict
+- `ResponseFormatter.format_word_created(word_id, english_word, translations_created)` — formats creation result with `[lang]` tags and language names
+- `TECHWORD_API_TOKEN` optional env var — Sanctum service token stored in `APIClient._auth_headers`; passed only to write methods (`create_word`, `create_translation`); read methods (`fetch_words`, `fetch_word`) never include the header, keeping public endpoints header-free
+- `TECHWORD_API_TOKEN=${TECHWORD_API_TOKEN:-}` propagated in `docker-compose.yml` environment section
+- 16 new tests: 3 for auth-header initialization, 3 for `create_word` (success + 422 + 401), 2 for `create_translation` (success + 422), 4 for `format_word_created`, 4 integration tests for `create_tech_word` — 167 total, 99% branch coverage maintained
+
+### Changed
+
+- `APIClient.__init__` reads `TECHWORD_API_TOKEN` at startup and stores `_auth_headers: dict[str, str]` — empty `{}` when absent, `{"Authorization": "Bearer <token>"}` when present; the shared `httpx.AsyncClient` headers remain unmodified (no token leak to public endpoints)
 
 ---
 

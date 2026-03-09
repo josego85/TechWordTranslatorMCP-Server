@@ -10,6 +10,7 @@ from techword_translator.server import (
     get_all_translations,
     get_term_details,
     list_tech_terms,
+    create_tech_word,
 )
 
 
@@ -294,6 +295,71 @@ class TestListTechTermsTool:
 
         assert "No terms found" in await list_tech_terms(page_size=1000)
         assert "No terms found" in await list_tech_terms(page_size=-5)
+
+
+class TestCreateTechWordTool:
+    """Integration tests for create_tech_word tool."""
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_create_word_with_translations(self, mock_env_vars):
+        """Test creating a word with both translations."""
+        new_word = {"id": 10, "word": "algorithm", "translations": []}
+        respx.post("https://api.test.com/api/v1/words").mock(
+            return_value=httpx.Response(201, json=new_word)
+        )
+        respx.post("https://api.test.com/api/v1/translations").mock(
+            return_value=httpx.Response(201, json={"id": 20, "word_id": 10, "language": "es", "translation": "algoritmo"})
+        )
+
+        result = await create_tech_word("algorithm", es_translation="algoritmo", de_translation="Algorithmus")
+
+        assert "Word created: 'algorithm' (ID: 10)" in result
+        assert "[es] Spanish: algoritmo" in result
+        assert "[de] German: Algorithmus" in result
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_create_word_without_translations(self, mock_env_vars):
+        """Test creating a word without any translations."""
+        new_word = {"id": 11, "word": "cache", "translations": []}
+        respx.post("https://api.test.com/api/v1/words").mock(
+            return_value=httpx.Response(201, json=new_word)
+        )
+
+        result = await create_tech_word("cache")
+
+        assert "Word created: 'cache' (ID: 11)" in result
+        assert "Translations added" not in result
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_create_word_api_error(self, mock_env_vars):
+        """Test create_tech_word returns error string on API failure."""
+        respx.post("https://api.test.com/api/v1/words").mock(
+            return_value=httpx.Response(401, json={"message": "Unauthenticated."})
+        )
+
+        result = await create_tech_word("algorithm")
+
+        assert "Error creating word 'algorithm'" in result
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_create_word_translation_error(self, mock_env_vars):
+        """Test that translation errors are reported inline without aborting."""
+        new_word = {"id": 12, "word": "pipeline", "translations": []}
+        respx.post("https://api.test.com/api/v1/words").mock(
+            return_value=httpx.Response(201, json=new_word)
+        )
+        respx.post("https://api.test.com/api/v1/translations").mock(
+            return_value=httpx.Response(500, json={"message": "Server error"})
+        )
+
+        result = await create_tech_word("pipeline", es_translation="tubería")
+
+        assert "Word created: 'pipeline' (ID: 12)" in result
+        assert "ERROR" in result
 
 
 class TestServerIntegrationEdgeCases:

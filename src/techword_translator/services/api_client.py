@@ -32,6 +32,8 @@ class APIClient:
             timeout=30.0,
             headers={"Accept": "application/json", "Content-Type": "application/json"},
         )
+        token = os.getenv("TECHWORD_API_TOKEN")
+        self._auth_headers: dict[str, str] = {"Authorization": f"Bearer {token}"} if token else {}
 
     async def fetch_words(
         self, per_page: int = 15, cursor: Optional[str] = None
@@ -74,6 +76,40 @@ class APIClient:
         response.raise_for_status()
 
         return Word(**response.json())
+
+    async def create_word(self, english_word: str) -> Word:
+        """Create a new English word.
+
+        Args:
+            english_word: The English word to create
+
+        Returns:
+            Created Word object
+        """
+        response = await self.client.post(
+            "/api/v1/words", json={"english_word": english_word}, headers=self._auth_headers
+        )
+        response.raise_for_status()
+        return Word(**response.json())
+
+    async def create_translation(self, word_id: int, language: str, translation: str) -> dict:
+        """Create a translation for an existing word.
+
+        Args:
+            word_id: ID of the word to translate
+            language: ISO 639-1 language code
+            translation: The translated term
+
+        Returns:
+            Raw API response dict
+        """
+        response = await self.client.post(
+            "/api/v1/translations",
+            json={"word_id": word_id, "language": language, "translation": translation},
+            headers=self._auth_headers,
+        )
+        response.raise_for_status()
+        return response.json()
 
     async def close(self):
         """Close the HTTP client."""

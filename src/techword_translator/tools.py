@@ -101,6 +101,41 @@ async def get_term_details(word_id: int) -> str:
             return f"Error retrieving word {word_id}: {str(e)}"
 
 
+async def create_tech_word(
+    english_word: str,
+    es_translation: Optional[str] = None,
+    de_translation: Optional[str] = None,
+) -> str:
+    """Create a new technical term with optional translations.
+
+    Requires TECHWORD_API_TOKEN to be set in the environment.
+
+    Args:
+        english_word: The English technical term to add
+        es_translation: Spanish translation (optional)
+        de_translation: German translation (optional)
+
+    Returns:
+        Confirmation message with the created word ID and translations
+    """
+    async with get_services() as (api, _, _):
+        try:
+            word = await api.create_word(english_word)
+        except Exception as e:
+            return f"Error creating word '{english_word}': {str(e)}"
+
+        translations_created: list[str] = []
+        for lang, term in [("es", es_translation), ("de", de_translation)]:
+            if term:
+                try:
+                    await api.create_translation(word.id, lang, term)
+                    translations_created.append(f"{lang}:{term}")
+                except Exception as e:
+                    translations_created.append(f"{lang}:ERROR — {str(e)}")
+
+        return ResponseFormatter.format_word_created(word.id, english_word, translations_created)
+
+
 async def list_tech_terms(
     page_size: int = 15,
     cursor: Optional[str] = None,

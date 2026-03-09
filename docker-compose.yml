@@ -14,6 +14,7 @@ services:
       - TECHWORD_TRANSLATOR_API_URL=${TECHWORD_TRANSLATOR_API_URL:-https://techwordtranslator.onrender.com}
       - MCP_SERVER_NAME=TechWord Translator
       - MCP_SERVER_VERSION=0.3.0
+      - TECHWORD_API_TOKEN=${TECHWORD_API_TOKEN:-}
     restart: unless-stopped
     stdin_open: true
     tty: true

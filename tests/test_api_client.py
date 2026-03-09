@@ -38,6 +38,24 @@ class TestAPIClientInitialization:
         assert headers["Accept"] == "application/json"
         assert headers["Content-Type"] == "application/json"
 
+    def test_client_without_token_has_empty_auth_headers(self, mock_env_vars, monkeypatch):
+        """Test that _auth_headers is empty when TECHWORD_API_TOKEN is not set."""
+        monkeypatch.delenv("TECHWORD_API_TOKEN", raising=False)
+        client = APIClient()
+        assert client._auth_headers == {}
+
+    def test_client_with_token_sets_auth_headers(self, mock_env_vars, monkeypatch):
+        """Test that _auth_headers contains Authorization when TECHWORD_API_TOKEN is set."""
+        monkeypatch.setenv("TECHWORD_API_TOKEN", "1|testtoken123")
+        client = APIClient()
+        assert client._auth_headers == {"Authorization": "Bearer 1|testtoken123"}
+
+    def test_public_client_headers_never_contain_authorization(self, mock_env_vars, monkeypatch):
+        """Test that shared client headers never carry Authorization regardless of token."""
+        monkeypatch.setenv("TECHWORD_API_TOKEN", "1|testtoken123")
+        client = APIClient()
+        assert "authorization" not in client.client.headers
+
     def test_client_has_timeout(self, mock_env_vars):
         """Test that client has timeout configured."""
         client = APIClient()
@@ -292,3 +310,76 @@ class TestAPIClientEdgeCases:
 
         assert result1.word == "computer"
         assert result2.word == "computer"
+
+
+class TestAPIClientCreateWord:
+    """Tests for create_word method."""
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_create_word_success(self, api_client):
+        """Test successful word creation."""
+        response_data = {"id": 10, "word": "algorithm", "translations": []}
+        route = respx.post("https://api.test.com/api/v1/words").mock(
+            return_value=httpx.Response(201, json=response_data)
+        )
+
+        result = await api_client.create_word("algorithm")
+
+        assert route.called
+        assert result.id == 10
+        assert result.word == "algorithm"
+        assert result.translations == []
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_create_word_conflict(self, api_client):
+        """Test create_word raises on 422 validation error."""
+        respx.post("https://api.test.com/api/v1/words").mock(
+            return_value=httpx.Response(422, json={"errors": {"english_word": ["The english word has already been taken."]}})
+        )
+
+        with pytest.raises(httpx.HTTPStatusError):
+            await api_client.create_word("algorithm")
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_create_word_unauthorized(self, api_client):
+        """Test create_word raises on 401 when no valid token."""
+        respx.post("https://api.test.com/api/v1/words").mock(
+            return_value=httpx.Response(401, json={"message": "Unauthenticated."})
+        )
+
+        with pytest.raises(httpx.HTTPStatusError):
+            await api_client.create_word("algorithm")
+
+
+class TestAPIClientCreateTranslation:
+    """Tests for create_translation method."""
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_create_translation_success(self, api_client):
+        """Test successful translation creation."""
+        response_data = {"id": 20, "word_id": 10, "language": "es", "translation": "algoritmo"}
+        route = respx.post("https://api.test.com/api/v1/translations").mock(
+            return_value=httpx.Response(201, json=response_data)
+        )
+
+        result = await api_client.create_translation(10, "es", "algoritmo")
+
+        assert route.called
+        assert result["id"] == 20
+        assert result["language"] == "es"
+        assert result["translation"] == "algoritmo"
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_create_translation_invalid_word_id(self, api_client):
+        """Test create_translation raises on 422 when word_id does not exist."""
+        respx.post("https://api.test.com/api/v1/translations").mock(
+            return_value=httpx.Response(422, json={"errors": {"word_id": ["The selected word id is invalid."]}})
+        )
+
+        with pytest.raises(httpx.HTTPStatusError):
+            await api_client.create_translation(9999, "es", "algoritmo")

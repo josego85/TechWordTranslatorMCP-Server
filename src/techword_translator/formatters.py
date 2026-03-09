@@ -130,6 +130,27 @@ class ResponseFormatter:
         return "\n".join(lines)
 
     @staticmethod
+    def format_word_created(word_id: int, english_word: str, translations_created: list[str]) -> str:
+        """Format a word creation result.
+
+        Args:
+            word_id: ID of the created word
+            english_word: The English word created
+            translations_created: List of 'language:term' strings for added translations
+
+        Returns:
+            Formatted confirmation string
+        """
+        lines = [f"Word created: '{english_word}' (ID: {word_id})"]
+        if translations_created:
+            lines.append("Translations added:")
+            lang_names = {"en": "English", "es": "Spanish", "de": "German"}
+            for entry in translations_created:
+                lang, term = entry.split(":", 1)
+                lines.append(f"  [{lang}] {lang_names.get(lang, lang)}: {term}")
+        return "\n".join(lines)
+
+    @staticmethod
     def format_all_translations(word: Word, source_locale: str) -> str:
         """Format all translations for a term.
 
